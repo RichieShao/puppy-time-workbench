@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>狗狗未来时间管理局 · 日程报</title>
+<link rel="stylesheet" href="styles.css?v=9">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gCyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#43D9FF"/><stop offset="1" stop-color="#7A5CFF"/>
+    </linearGradient>
+    <linearGradient id="gSun" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFD166"/><stop offset="1" stop-color="#FF8AC2"/>
+    </linearGradient>
+    <linearGradient id="gMint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#48E0A0"/><stop offset="1" stop-color="#43D9FF"/>
+    </linearGradient>
+    <linearGradient id="gCoral" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF6B6B"/><stop offset="1" stop-color="#FF8AC2"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="phone">
+  <div class="aurora a1"></div>
+  <div class="aurora a2"></div>
+  <div class="stars" id="stars"></div>
+
+  <main id="view" class="view today">
+
+    <!-- ============ 日程 ============ -->
+    <section class="view-pane is-active" data-view="today">
+      <header class="topbar">
+        <div class="top-left">
+          <span class="bureau">未来时间管理局 · 人类友好分部</span>
+          <h1 class="logo">狗狗日程报</h1>
+        </div>
+        <button class="icon-btn" id="bellBtn" aria-label="通知">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="dot"></span>
+        </button>
+      </header>
+
+      <div class="userline">
+        <button class="avatar" id="homeAvatar" aria-label="更换头像">🐶<span class="lv">Lv.9</span></button>
+        <div class="usermsg">
+          <p class="greet" id="greetText">早上好，局长汪 🐾</p>
+          <p class="date"><span class="mono" id="liveDate">2026年8月9日 · 周六</span> · 时间坐标 <span class="mono" id="liveClock">T-09:42:00</span></p>
+        </div>
+      </div>
+
+      <!-- 下拉刷新占位 -->
+      <div class="pull-bar" id="pullBar"><span class="pull-label">下拉更新数据 ✓</span></div>
+
+      <div class="mascot-card">
+        <div class="mascot">
+          <svg viewBox="0 0 140 120" class="puppy" role="img" aria-label="手绘小狗汪局长">
+            <g fill="#0A1433" opacity=".45"><circle cx="8" cy="14" r="2"/><circle cx="130" cy="10" r="2"/><circle cx="118" cy="30" r="1.4"/><circle cx="22" cy="40" r="1.4"/></g>
+            <ellipse cx="70" cy="66" rx="40" ry="34" fill="#FFD166"/>
+            <circle cx="70" cy="66" r="40" fill="none" stroke="#FFB547" stroke-width="3" stroke-dasharray="4 6" opacity=".5"/>
+            <path d="M33 52 Q30 22 52 26 Q60 18 66 26 Q70 12 74 26 Q80 18 88 26 Q110 22 107 52 Z" fill="#FFB547"/>
+            <path d="M60 30 Q70 40 80 30" stroke="#7A4A11" stroke-width="3" fill="none" stroke-linecap="round" opacity=".55"/>
+            <ellipse cx="54" cy="60" rx="6" ry="7" fill="#fff"/><circle cx="55" cy="61" r="3" fill="#24181A"/>
+            <ellipse cx="86" cy="60" rx="6" ry="7" fill="#fff"/><circle cx="87" cy="61" r="3" fill="#24181A"/>
+            <circle cx="55" cy="58.5" r="1.2" fill="#fff"/><circle cx="87" cy="58.5" r="1.2" fill="#fff"/>
+            <ellipse cx="62" cy="69" rx="2.6" ry="3.4" fill="#24181A"/><ellipse cx="78" cy="69" rx="2.6" ry="3.4" fill="#24181A"/>
+            <path d="M70 74 Q70 80 64 80 Q70 84 76 80 Q70 80 70 74" fill="#FF6B6B"/>
+            <path d="M70 74 Q70 78 67 80" stroke="#FFD166" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <g transform="translate(101 40)">
+              <circle r="12" fill="#060D24"/><circle r="9" fill="#0A1433" stroke="#43D9FF" stroke-width="1.5"/>
+              <path d="M0 -5 L0 0 L4 2" stroke="#43D9FF" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <path d="M70 84 L70 98 M70 98 L58 104 M70 98 L82 104" stroke="#FFB547" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <div class="bubble">汪！今天也要 <b>和时间做朋友</b> ✦</div>
+        </div>
+        <div class="mascot-meta">
+          <div class="tile"><span class="t-ic cyan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><div><b class="mono">3</b><span>已盯盘项目</span></div></div>
+          <div class="tile"><span class="t-ic sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><div><b class="mono">2</b><span>待办提醒</span></div></div>
+          <div class="tile"><span class="t-ic mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><div><b class="mono">4</b><span>今日已完成</span></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>今日任务</h2><span class="sec-sub" id="todayPct">6/6</span></div>
+        <div class="today-progress"><div class="tp-bar"><i id="todayBar" style="width:66%"></i></div><span class="tp-hint">汪，完成度越高，时间越值钱</span></div>
+        <ul class="mission-list" id="missionList"></ul>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>例行安排</h2><span class="sec-sub">时间管理局流程</span></div>
+        <div class="routine-grid" id="routineGrid"></div>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>关注速览</h2><a class="sec-link" data-goto="portfolio">查看全部 →</a></div>
+        <div class="mini-stocks" id="miniStocks"></div>
+      </div>
+    </section>
+
+    <!-- ============ 关注 ============ -->
+    <section class="view-pane" data-view="portfolio">
+      <header class="topbar">
+        <div class="top-left"><span class="bureau">关注 · 时间胶囊</span><h1 class="logo">我的关注小队</h1></div>
+        <button class="icon-btn" data-goto="today" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </button>
+      </header>
+
+      <div class="score-sum">
+        <div class="score-ring"><svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="34" class="ring-bg"/><circle cx="42" cy="42" r="34" class="ring-fg" id="scoreRing" style="stroke-dasharray:calc(213.6*0.72) 213.6"/></svg><div class="ring-num"><b id="scoreTotal">43</b><span>/60</span></div></div>
+        <div class="score-labels">
+          <div class="sl"><span class="k">好生意</span><b class="mono" id="scoreBs">14</b><i>/20</i></div>
+          <div class="sl"><span class="k">好企业</span><b class="mono" id="scoreBe">13</b><i>/20</i></div>
+          <div class="sl"><span class="k">好投资</span><b class="mono" id="scoreBi">16</b><i>/20</i></div>
+        </div>
+      </div>
+
+      <div class="quote-bar">
+        <span class="qb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg></span>
+        <span id="quoteStatus">行情待同步 · 点击刷新拉取实时数据</span>
+        <button class="qb-refresh" id="quoteRefresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
+          <span>刷新行情</span>
+        </button>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>我的关注</h2>
+          <div class="sec-actions">
+            <button class="sec-link sort-btn" id="sortBtn">排序：评分 ▾</button>
+            <button class="sec-link eval-btn" id="evalAllBtn">✦ 自动评估</button>
+            <button class="sec-link add-btn" id="addStockBtn">＋ 添加</button>
+          </div>
+        </div>
+        <ul class="stock-list" id="stockList"></ul>
+        <div class="empty-hidden" id="stockEmpty"></div>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>相关资讯 · 时间频道</h2>
+          <div class="sec-actions">
+            <button class="sec-link auto-badge" id="newsAutoBadge">自动刷新中</button>
+            <button class="sec-link" id="newsRefresh">换一批 ↻</button>
+          </div>
+        </div>
+        <div class="news-head">
+          <span class="news-pulse"></span>
+          <b id="newsHead">「时间频道」</b>
+          <button class="news-all" id="newsAll">我的收藏 ▾</button>
+        </div>
+        <div class="news-tabs" id="newsTabs"></div>
+        <ul class="news-list" id="newsList"></ul>
+      </div>
+    </section>
+
+    <!-- ============ 分析 ============ -->
+    <section class="view-pane" data-view="framework">
+      <header class="topbar">
+        <div class="top-left"><span class="bureau">分析 · 时间流水线</span><h1 class="logo">九段分析旅程</h1></div>
+        <button class="icon-btn" data-goto="today" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </button>
+      </header>
+
+      <div class="stage-progress">
+        <div class="sp-top"><span>分析进度</span><b class="mono" id="stagePct">0%</b></div>
+        <div class="sp-bar"><div class="sp-fill" id="stageFill" style="width:0%"></div></div>
+        <p class="sp-hint" id="stageHint">门卫关卡：核心指标扫描</p>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>阶段流水线</h2><span class="sec-sub">严格按序 · 不跳步</span></div>
+        <ul class="stage-list" id="stageList"></ul>
+      </div>
+    </section>
+
+    <!-- ============ 纪律 ============ -->
+    <section class="view-pane" data-view="discipline">
+      <header class="topbar">
+        <div class="top-left"><span class="bureau">纪律 · 时间守护</span><h1 class="logo">风控铁律</h1></div>
+        <button class="icon-btn" data-goto="today" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </button>
+      </header>
+
+      <div class="rule-hero">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+        <p>AI 是副驾，不是司机。<br>最后点击买卖按钮的，永远是你。</p>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>五条铁律</h2><span class="sec-sub">每次分析末尾必输出</span></div>
+        <ul class="rule-list" id="ruleList"></ul>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>下单前风险清单</h2><span class="sec-sub">风险点 ≥ 利好点</span></div>
+        <div class="checklist" id="orderChecklist"></div>
+        <button class="btn-primary" id="confirmBtn">确认风险清单 ✓</button>
+      </div>
+    </section>
+
+    <!-- ============ 我的 ============ -->
+    <section class="view-pane" data-view="me">
+      <header class="topbar">
+        <div class="top-left"><span class="bureau">我的 · 时光档案</span><h1 class="logo">局长汪档案</h1></div>
+        <button class="icon-btn" data-goto="today" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </button>
+      </header>
+
+      <div class="me-card">
+        <button class="me-ava" id="meAvatar" aria-label="更换头像">🐶</button>
+        <div class="me-info">
+          <div class="me-name-row">
+            <h3 id="meName">时间管理局 · 汪局长</h3>
+            <button class="me-edit" id="editNameBtn" aria-label="修改昵称">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+            </button>
+          </div>
+          <p class="mono">ID: TM-2026-1297</p>
+          <p>投资价值观校准 · 良好</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>价值观校准</h2><span class="sec-sub">快速自查 · 不评分</span></div>
+        <ul class="calib-list" id="calibList"></ul>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>认知偏差自查</h2><span class="sec-sub">六大偏差</span></div>
+        <div class="bias-tags" id="biasTags"></div>
+      </div>
+
+      <div class="section">
+        <div class="sec-head"><h2>偏好设置</h2></div>
+        <div class="setting-list" id="settingList"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 添加任务 FAB -->
+  <form class="add-fab" id="addForm">
+    <input type="text" id="addInput" placeholder="立个 flag…" aria-label="添加任务" autocomplete="off">
+    <button type="submit" class="fab-btn" aria-label="添加任务">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </form>
+
+  <!-- 模态层 -->
+  <div class="modal" id="modal" aria-hidden="true"></div>
+
+  <!-- 庆祝彩带 -->
+  <div class="confetti" id="confetti"></div>
+
+  <nav class="tabbar" id="tabbar">
+    <button class="tab is-active" data-tab="today">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>日程</span>
+    </button>
+    <button class="tab" data-tab="portfolio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M20 12a8 8 0 0 1-5.6 7.6 1 1 0 0 1-1.1-.2l-1.4-1.4a1 1 0 0 1 0-1.4 1 1 0 0 1 1.4 0l.4.4a6 6 0 0 0 4.2-9.6 1 1 0 0 1 0-1.4l1.4-1.4a1 1 0 0 1 1.4 0l.4.4A8 8 0 0 1 20 12z"/><path d="M12 4a8 8 0 0 1 5.6 7.6"/><path d="M4 12a8 8 0 0 1 5.6-7.6 1 1 0 0 1 1.1.2l1.4 1.4a1 1 0 0 1 0 1.4 1 1 0 0 1-1.4 0l-.4-.4A6 6 0 0 0 6 12z"/></svg>
+      <span>关注</span>
+    </button>
+    <button class="tab" data-tab="framework">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>分析</span>
+    </button>
+    <button class="tab" data-tab="discipline">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+      <span>纪律</span>
+    </button>
+    <button class="tab" data-tab="me">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>我的</span>
+    </button>
+  </nav>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script src="mock.js?v=10"></script>
+    <script src="app.js?v=10"></script>
+</body>
+</html>
