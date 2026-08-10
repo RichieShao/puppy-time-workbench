@@ -275,6 +275,7 @@
     const s = allStocks().find((x) => x.code === code);
     if (s) autoEvaluate(s); // 入队即按评估引擎重算，杜绝候选池写死分数与引擎失真错位
     renderStocks(); renderScoreSum(); renderMiniStocks(); renderNews();
+    fetchQuotes(); // 入队后立即拉一次行情，避免出现"待拉取"要等 30 秒自动刷新才出价
     toast(`已加入关注：${s ? s.name : code} 🐾`);
   }
   // 添加关注弹窗（候选池 + 自定义 双标签）
@@ -373,11 +374,14 @@
       } else if (cands.length > 1) {
         toast(`汪，有多个标的匹配「${input}」：${cands.slice(0, 3).map((c) => c.name).join('、')}，请用代码精确添加`);
       } else {
-        // 未在已知池命中：优先查 A 股名称→代码映射，取真实代码以拉到行情；否则用虚拟代码并标注无实时行情
+        // 未在已知池命中：先查静态 A 股名称→代码映射；查不到再走腾讯智能搜索实时反查真实代码，尽最大努力拉到行情
         const mapCode = (window.DB.stockNameMap && window.DB.stockNameMap[input]) || '';
-        const autoSub = inferSub(input);
-        addCustom({ code: mapCode || genCustomCode(), name: input, sub: sub || autoSub || (mapCode ? 'A股标的' : '自定义标的'), noQuote: !mapCode });
-        closeModal();
+        if (mapCode) {
+          addCustom({ code: mapCode, name: input, sub: sub || inferSub(input) || 'A股标的', noQuote: false });
+          closeModal();
+        } else {
+          addByName(input, sub);
+        }
       }
     });
   }
@@ -652,6 +656,44 @@
     });
     const status = $('#quoteStatus');
     if (status) status.textContent = '自动刷新中 · 每 30 秒同步 ✓ ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // 按中文名实时反查真实代码（腾讯智能搜索 · JSONP）：修复静态映射覆盖不全导致"按名添加"的标的拿不到真实代码、进而永远拉不到行情
+  // smartbox 固定写入全局 v_hint，返回形如 sz~002885~京泉华~jqh~GP-A，多结果用 ^ 分隔
+  function resolveStockName(input, cb) {
+    const script = document.createElement('script');
+    script.src = 'https://smartbox.gtimg.cn/s3/?q=' + encodeURIComponent(input) + '&t=all';
+    script.onload = () => {
+      const raw = window.v_hint;
+      const items = String(raw || '').split('^').map((it) => {
+        const p = it.split('~');
+        if (p.length < 3) return null;
+        return { market: p[0], code: p[1], name: p[2], type: p[4] || '' };
+      }).filter(Boolean);
+      // 优先 A 股匹配（type 含 GP-A / A股），其次任意 6 位数字代码
+      const hit = items.find((x) => /GP-A|A股/.test(x.type)) || items.find((x) => /^\d{6}$/.test(x.code));
+      if (hit && /^\d{6}$/.test(hit.code)) cb({ code: hit.code, name: hit.name || input });
+      else cb(null);
+    };
+    script.onerror = () => cb(null);
+    document.head.appendChild(script);
+    setTimeout(() => script.remove(), 8000);
+  }
+  // 解析并加入一个"仅中文名"的标的：先尽量实时反查到真实代码（能拉行情），查不到才退回虚拟代码并标注无行情
+  function addByName(input, sub) {
+    resolveStockName(input, (hit) => {
+      const autoSub = inferSub(input);
+      if (hit) {
+        const code = hit.code;
+        if (state.watch.includes(code)) { toast(`「${hit.name || input}」已在关注列表里啦`); return; }
+        addCustom({ code, name: hit.name || input, sub: sub || autoSub || 'A股标的', noQuote: false });
+        toast(`已加入关注：${hit.name || input}（${code}）🐾`);
+      } else {
+        addCustom({ code: genCustomCode(), name: input, sub: sub || autoSub || '自定义标的', noQuote: true });
+        toast(`暂未查询到「${input}」的代码，行情无法自动获取，建议改用 6 位代码添加`);
+      }
+      closeModal();
+    });
   }
 
   // ---------- 相关资讯（prototype 桩 · 关键词匹配标的） ----------
@@ -1375,6 +1417,25 @@
           if (!state.watch.includes(real)) state.watch.push(real);
           changed = true;
         }
+        // 迁移2.1：静态映射查不到、但可按名实时反查到真实代码的虚拟标的——后台异步反查并修复，同样让行情能自动更新
+      } else if (s.custom && /^9\d{5}$/.test(s.code) && s.noQuote) {
+        resolveStockName(s.name, (hit) => {
+          if (!hit || state.custom[hit.code]) return;
+          const src = s.code;
+          delete state.custom[src];
+          s.code = hit.code;
+          s.name = hit.name || s.name;
+          s.noQuote = false;
+          s.val = null;
+          s.calibrated = false;
+          state.custom[hit.code] = s;
+          if (!state.watch.includes(hit.code)) state.watch.push(hit.code);
+          window.CustomStore.save(state.custom);
+          window.PStore.set('p_workbench_watch', state.watch);
+          renderStocks(); renderMiniStocks(); renderNews();
+          fetchQuotes();
+          toast(`已自动修复「${s.name}」行情（解析到真实代码 ${hit.code}）`);
+        });
       }
       // 统一用新评估引擎重算，纠正旧版失真的评分/评级/趋势
       autoEvaluate(s);
