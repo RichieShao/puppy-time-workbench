@@ -36,6 +36,7 @@
     bias: window.PStore.get('p_workbench_bias', []),
     settings: window.PStore.get('p_workbench_settings', DB.settings.map((s) => s.on)),
     stageCheck: window.PStore.get('p_workbench_stagecheck', {}),
+    stageDone: window.PStore.get('p_workbench_stagedone', []), // 已通关阶段编号
     user: Object.assign({}, DB.user, window.PStore.get('p_workbench_user', {})),
     watch: window.PStore.get('p_workbench_watch', DB.stocks.map((s) => s.code)),
     custom: window.CustomStore.load(),
@@ -304,7 +305,7 @@
               <li class="add-item" data-add="${p.code}">
                 <div class="add-info"><b>${p.name}</b><span class="mono">${p.code} · ${p.sub}</span></div>
                 <span class="add-score mono">${p.total}<i>/60</i></span>
-                <button class="add-btn-inline" data-add="${p.code}">${ICONS.plus} 入队</button>
+                <button class="add-btn-inline">${ICONS.plus} 入队</button>
               </li>`).join('')
             : '<li class="empty-state"><span class="es-ic">🐾</span><p>候选池的队员都入队啦，切到「自定义」新增吧</p></li>'}
           </ul>
@@ -358,8 +359,13 @@
           if (!state.watch.includes(input)) { addWatch(input); closeModal(); }
           else toast('这个标的已在关注列表里啦');
         } else {
-          addCustom({ code: input, name: input, sub: sub || '自定义标的' });
-          closeModal();
+          // 代码不在已知池：先实时反查真实名称，避免显示成"代码/代码"；查不到退回用代码作名称
+          resolveStockName(input, (res) => {
+            const displayName = (res && res.name) || input;
+            const autoSub = inferSub(displayName);
+            addCustom({ code: input, name: displayName, sub: sub || autoSub || '自定义标的', noQuote: false });
+            closeModal();
+          });
         }
         return;
       }
@@ -552,10 +558,11 @@
     const known = KNOWN_SCORES[s.code];
     const h = hashNum(s.code + s.name);
     // 小幅抖动 ±1，保证评分稳定可解释；优质核心资产命中白名单后取基准分，避免被随机拉崩
-    const jitter = (v) => Math.max(4, Math.min(20, v + ((h % 3) - 1)));
-    const bs = jitter(known ? known[0] : ind.bs);
-    const be = jitter(known ? known[1] : ind.be);
-    const bi = jitter(known ? known[2] : ind.bi);
+    // 关键：三个维度用不同的 hash 种子，避免未知标的三个维度全部同值（如全是 11）
+    const jitter = (v, seed) => Math.max(4, Math.min(20, v + ((hashNum(s.code + s.name + seed) % 3) - 1)));
+    const bs = jitter(known ? known[0] : ind.bs, 'bs');
+    const be = jitter(known ? known[1] : ind.be, 'be');
+    const bi = jitter(known ? known[2] : ind.bi, 'bi');
     const total = bs + be + bi;
     const grade = gradeOf(total);
     const trend = total >= 45 ? (h % 2 ? 'up' : 'flat') : total >= 30 ? 'flat' : 'down';
@@ -618,8 +625,9 @@
 
   // ---------- 实时行情（腾讯行情 · 免后端 JSONP） ----------
   function marketPrefix(code) {
-    if (/^(5|6|9)/.test(code)) return 'sh';
-    if (/^(0|2|3)/.test(code)) return 'sz';
+    if (/^(5|6|9)/.test(code)) return 'sh'; // 6=沪A、5=沪基金/ETF、9=沪B
+    if (/^(0|1|2|3)/.test(code)) return 'sz'; // 0=深A、1=深基金/ETF、2=深B、3=创业板
+    if (/^(4|8)/.test(code)) return 'bj'; // 4/8=北交所
     return 'sh';
   }
   function fetchQuotes() {
@@ -980,18 +988,20 @@
   // ---------- 分析流水线（可展开） ----------
   function renderStages() {
     const list = $('#stageList'); list.innerHTML = '';
-    const doneCount = DB.stages.filter((s) => s.done).length;
+    const isDone = (no) => { const s = DB.stages.find((x) => x.no === no); return !!(s && (s.done || state.stageDone.includes(no))); };
+    const doneCount = DB.stages.filter((s) => s.done || state.stageDone.includes(s.no)).length;
     const pct = Math.round((doneCount / DB.stages.length) * 100);
     $('#stagePct').textContent = pct + '%';
     $('#stageFill').style.width = pct + '%';
     DB.stages.forEach((s) => {
+      const sd = isDone(s.no);
       const li = document.createElement('li');
-      li.className = 'stage' + (s.done ? ' is-done' : '');
+      li.className = 'stage' + (sd ? ' is-done' : '');
       li.setAttribute('data-no', s.no);
       li.innerHTML = `
         <div class="st-no">${String(s.no).padStart(2, '0')}</div>
         <div class="st-body">
-          <div class="st-title"><b>${s.title}</b>${s.done ? ICONS.paw : ''}</div>
+          <div class="st-title"><b>${s.title}</b>${sd ? ICONS.paw : ''}</div>
           <p>${s.desc}</p>
         </div>
         <span class="st-tag ${s.gate ? 'gate' : ''} ${s.core ? 'core' : ''}">${s.tag}</span>
@@ -1011,10 +1021,11 @@
     }
     const ext = document.createElement('div');
     ext.className = 'st-extend';
+    const sd = !!(s.done || state.stageDone.includes(s.no));
     ext.innerHTML = `
       <div class="st-extend-head">
         <span>阶段清单 · 共 ${s.items.length} 项</span>
-        <button class="st-unlock" data-no="${s.no}">${s.done ? '已完成 ✓' : '本阶段已通关'}</button>
+        <button class="st-unlock" data-no="${s.no}">${sd ? '已完成 ✓' : '本阶段已通关'}</button>
       </div>
       <ul class="st-items">
         ${s.items.map((it, idx) => {
@@ -1034,6 +1045,15 @@
     if (item) item.classList.toggle('is-on', !!state.stageCheck[key]);
     const flag = item && item.querySelector('.st-flag');
     if (flag) flag.innerHTML = state.stageCheck[key] ? ICONS.check : ICONS.target;
+  }
+  // 通关一个阶段（持久化，避免刷新后丢失）
+  function markStageDone(no) {
+    const num = Number(no);
+    const s = DB.stages.find((x) => x.no === num); if (!s) return;
+    const idx = state.stageDone.indexOf(num);
+    if (idx >= 0) state.stageDone.splice(idx, 1); else state.stageDone.push(num);
+    window.PStore.set('p_workbench_stagedone', state.stageDone);
+    renderStages();
   }
 
   // ---------- 纪律：铁律 + 风险清单 ----------
@@ -1196,10 +1216,12 @@
 
   // ---------- 自动刷新（行情 30s / 资讯 60s） ----------
   let autoTimers = [];
+  let visHandler = null;
   function startAutoRefresh() {
-    // 先清掉旧的定时器，避免重复启动
+    // 先清掉旧的定时器与监听，避免重复启动
     autoTimers.forEach((t) => clearInterval(t));
     autoTimers = [];
+    if (visHandler) { document.removeEventListener('visibilitychange', visHandler); visHandler = null; }
     // 行情每 30 秒自动同步
     autoTimers.push(setInterval(() => {
       if (document.hidden) return; // 后台页面不请求，省流量
@@ -1211,9 +1233,10 @@
       renderNews();
     }, 60000));
     // 页面重新可见时立即同步一次
-    document.addEventListener('visibilitychange', () => {
+    visHandler = () => {
       if (!document.hidden) { fetchQuotes(); renderNews(); }
-    });
+    };
+    document.addEventListener('visibilitychange', visHandler);
   }
 
   // ---------- 下拉刷新（模拟） ----------
@@ -1271,6 +1294,9 @@
       // 股票卡片 → 详情
       const sc = e.target.closest('[data-code]');
       if (sc) { openStockModal(sc.dataset.code); return; }
+      // 阶段通关按钮（需在 .stage 之前，避免误折叠）
+      const unlock = e.target.closest('.st-unlock');
+      if (unlock) { markStageDone(unlock.dataset.no); return; }
       // 阶段清单项 → 勾选（需在 .stage 之前，避免折叠）
       const sitem = e.target.closest('.st-item');
       if (sitem) { toggleStageItem(sitem.dataset.key); return; }
@@ -1444,6 +1470,18 @@
           fetchQuotes();
           toast(`已自动修复「${s.name}」行情（解析到真实代码 ${hit.code}）`);
         });
+      }
+      // 迁移3：修复旧版"代码不在池"时把名称存成代码本身的问题（如 name=600050）——按代码反查真实名称，让展示与行业推断都正确
+      if (s.custom && /^\d{6}$/.test(s.code) && s.name === s.code) {
+        (function (stk) {
+          resolveStockName(stk.code, (res) => {
+            if (!res || !res.name || res.name === stk.code) return;
+            stk.name = res.name;
+            stk.sub = stk.sub === '自定义标的' ? inferSub(res.name) || stk.sub : stk.sub;
+            window.CustomStore.save(state.custom);
+            renderStocks(); renderMiniStocks(); renderNews();
+          });
+        })(s);
       }
       // 统一用新评估引擎重算，纠正旧版失真的评分/评级/趋势
       autoEvaluate(s);
